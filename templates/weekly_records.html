@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Records - Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="weekly-records-page">
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>💰 Expense Tracker</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
+                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
+                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
+                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
+                <li><a href="{{ url_for('history') }}">📜 History</a></li>
+                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
+                <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h1>📅 Weekly Records</h1>
+
+            <div class="charts">
+                <div class="chart-container">
+                    <h3>Daily Expenses</h3>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Category Breakdown</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Daily expenses bar chart
+        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+        const dailyData = {{ daily_expenses|tojson }};
+        new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dailyData),
+                datasets: [{
+                    label: 'Daily Expenses (₹)',
+                    data: Object.values(dailyData),
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Category pie chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryData = {{ category_expenses|tojson }};
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(categoryData),
+                datasets: [{
+                    data: Object.values(categoryData),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9999'],
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

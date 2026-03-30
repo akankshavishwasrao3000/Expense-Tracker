@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="history-page">
+
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>💰 Expense Tracker</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
+                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
+                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
+                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
+                <li><a href="{{ url_for('history') }}">📜 History</a></li>
+                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
+                <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h1 style="color: white;">📜 Expense History</h1>
+
+            <!-- Filters -->
+            <div class="filter-card">
+                <div class="filter-group">
+                    <label for="dateFilter">📅 Date</label>
+                    <input type="date" id="dateFilter" class="modern-input">
+                </div>
+
+                <div class="filter-group">
+                    <label for="categoryFilter">📂 Category</label>
+                    <input type="text" id="categoryFilter" placeholder="Enter category" class="modern-input">
+                </div>
+
+                <div class="filter-group">
+                    <label for="amountMin">₹ Min Amount</label>
+                    <input type="number" id="amountMin" step="0.01" placeholder="0.00" class="modern-input">
+                </div>
+
+                <div class="filter-group">
+                    <label for="amountMax">₹ Max Amount</label>
+                    <input type="number" id="amountMax" step="0.01" placeholder="0.00" class="modern-input">
+                </div>
+
+                <div class="filter-action">
+                    <button class="btn btn-filter" onclick="applyFilters()">Apply Filters</button>
+                </div>
+            </div>
+
+            <!-- Expense Table -->
+            <div class="expense-table table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>📅 Date</th>
+                            <th>📂 Category</th>
+                            <th>📝 Description</th>
+                            <th>💰 Amount</th>
+                            <th>💳 Payment Mode</th>
+                            <th>📊 Entry Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date }}</td>
+                            <td><strong>{{ expense.category }}</strong></td>
+                            <td>{{ expense.description }}</td>
+                            <td>₹{{ "%.2f"|format(expense.amount) }}</td>
+                            <td>{{ expense.payment_mode }}</td>
+                            <td>{{ expense.entry_type }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            // Simple client-side filtering (in a real app, this would be server-side)
+            const dateFilter = document.getElementById('dateFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+            const amountMin = parseFloat(document.getElementById('amountMin').value) || 0;
+            const amountMax = parseFloat(document.getElementById('amountMax').value) || Infinity;
+
+            const rows = document.querySelectorAll('#expenseTableBody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const date = cells[0].textContent;
+                const category = cells[1].textContent.toLowerCase();
+                const amount = parseFloat(cells[3].textContent.replace('₹', '').trim());
+
+                const matchesDate = !dateFilter || date === dateFilter;
+                const matchesCategory = !categoryFilter || category.includes(categoryFilter);
+                const matchesAmount = amount >= amountMin && amount <= amountMax;
+
+                row.style.display = matchesDate && matchesCategory && matchesAmount ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

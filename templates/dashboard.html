@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard - Expense Tracker</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body class="dashboard-page">
+
+    <div class="dashboard">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <h2>💰 Expense Tracker</h2>
+
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
+                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
+                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
+                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
+                <li><a href="{{ url_for('history') }}">📜 History</a></li>
+                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
+                <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
+            </ul>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <h1 style="color: aliceblue;">Welcome back, {{ username }} 👋</h1>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+
+                <div class="card">
+                    <h3>💵 Total Expenses</h3>
+                    <div class="card-value">₹{{ "%.2f"|format(total_expenses) }}</div>
+                    <p>All time expenses</p>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Monthly Expenses</h3>
+                    <div class="card-value">₹{{ "%.2f"|format(monthly_expenses) }}</div>
+                    <p>This month</p>
+                </div>
+
+                <div class="card">
+                    <h3>✅ Transactions</h3>
+                    <div class="card-value">{{ total_transactions }}</div>
+                    <p>Total entries</p>
+                </div>
+
+            </div>
+
+            <!-- EXPORT BUTTONS -->
+            <div class="export-buttons">
+
+                <a href="{{ url_for('export_csv') }}">
+                    <button class="btn btn-success">Download CSV Report</button>
+                </a>
+
+                <a href="{{ url_for('export_pdf') }}">
+                    <button class="btn btn-primary">Download PDF Report</button>
+                </a>
+
+            </div>
+
+            <!-- Expense Form -->
+            <div class="expense-form">
+
+                <h2>📝 Add Expense Manually</h2>
+
+                <form id="expenseForm" class="form-box">
+
+                    <!-- Row 1 -->
+                    <div class="form-row">
+
+                        <div class="input-field">
+                            <label>Date</label>
+                            <input type="date" name="date" required>
+                        </div>
+
+                        <div class="input-field">
+                            <label>Category</label>
+                            <input type="text" name="category" placeholder="Food, Transport" required>
+                        </div>
+
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="form-row">
+
+                        <div class="input-field">
+                            <label>Description</label>
+                            <input type="text" name="description" placeholder="What did you spend on?" required>
+                        </div>
+
+                        <div class="input-field">
+                            <label>Amount</label>
+                            <input type="number" name="amount" step="0.01" placeholder="0.00" required>
+                        </div>
+
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="form-row">
+
+                        <div class="input-field">
+                            <label>Payment Mode</label>
+
+                            <select name="payment_mode" required>
+                                <option value="">Select payment mode</option>
+                                <option value="Cash">💵 Cash</option>
+                                <option value="Card">💳 Card</option>
+                                <option value="UPI">📱 UPI</option>
+                                <option value="Net Banking">🏦 Net Banking</option>
+                            </select>
+
+                        </div>
+
+                        <!-- Empty column to keep alignment -->
+                        <div class="input-field"></div>
+
+                    </div>
+
+                    <!-- Button -->
+                    <div style="text-align:center;margin-top:10px;">
+
+                        <button type="submit" class="btn btn-success"
+                            style="padding:12px 40px;min-width:200px;border-radius:12px;font-weight:600;">
+
+                            Add Expense
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- Expense Table -->
+            <div class="expense-table">
+
+                <h2>📋 Recent Expenses</h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% if expenses %}
+
+                        {% for expense in expenses %}
+
+                        <tr>
+
+                            <td>{{ expense.date }}</td>
+                            <td><strong>{{ expense.category }}</strong></td>
+                            <td>{{ expense.description }}</td>
+                            <td>₹{{ "%.2f"|format(expense.amount) }}</td>
+                            <td>{{ expense.payment_mode }}</td>
+                            <td>{{ expense.entry_type }}</td>
+
+                            <td>
+
+                                <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;"
+                                    onclick="deleteExpense('{{ expense.id }}')">
+                                    Delete
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="7">No expenses found</td>
+                        </tr>
+
+                        {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <div id="chatbot-icon" class="chatbot-icon">
+        <span>🤖</span>
+    </div>
+
+    <div id="chat-window" class="chat-window">
+
+        <div class="chat-header">
+            <h3>Nova – Expense Assistant</h3>
+            <button id="close-chat">×</button>
+        </div>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <div class="chat-input">
+
+            <div class="chat-input-top">
+                <input type="text" id="chat-input" placeholder="Type your expense...">
+            </div>
+
+            <div class="chat-input-bottom">
+                <button id="mic-btn">🎤</button>
+                <button id="send-btn">Send</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+
+</body>
+
+</html>
