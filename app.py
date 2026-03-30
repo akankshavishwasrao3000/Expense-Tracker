@@ -77,6 +77,92 @@ def get_user_expenses(user_id, start_date=None, end_date=None):
     query += ' ORDER BY date DESC'
     return db.execute(query, params).fetchall()
 
+def word_to_number(word):
+    mapping = {
+        "first": 1, "second": 2, "third": 3, "fourth": 4,
+        "fifth": 5, "sixth": 6, "seventh": 7,
+        "eighth": 8, "ninth": 9, "tenth": 10,
+        "last": -1
+    }
+    return mapping.get(word.lower())
+
+
+import re
+
+def extract_index(message, max_index=None):
+    message = message.lower()
+
+    # ✅ 1. WORD PRIORITY (VERY IMPORTANT FIX)
+    word_map = {
+        "first": 1,
+        "second": 2,
+        "third": 3,
+        "fourth": 4,
+        "fifth": 5,
+        "sixth": 6,
+        "seventh": 7,
+        "eighth": 8,
+        "ninth": 9,
+        "tenth": 10,
+        "last": max_index
+    }
+
+    for word, value in word_map.items():
+        if word in message:
+            return value
+
+    # ✅ 2. NUMBER (ONLY FIRST NUMBER AFTER UPDATE/DELETE)
+    match = re.search(r'(update|delete)\s+(\d+)', message)
+    if match:
+        return int(match.group(2))
+
+    return None
+
+
+def extract_keyword_from_description(description):
+    """
+    Extract a short keyword from the description.
+    For use in clean display formatting.
+    """
+    keywords_map = {
+        "food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast", "food", "sandwich", "coffee", "tea"],
+        "fruits": ["fruit", "apple", "banana", "mango", "orange", "vegetables"],
+        "transport": ["bus", "train", "metro", "uber", "ola", "auto", "petrol", "fuel", "taxi", "transport"],
+        "shopping": ["shopping", "mall", "clothes", "dress", "shoes"],
+        "entertainment": ["movie", "cinema", "netflix", "game"],
+        "adventure": ["trekking", "climbing", "trip", "travel"],
+        "health": ["medicine", "hospital", "doctor"],
+        "education": ["book", "course", "fees"],
+        "rent": ["rent"]
+    }
+    
+    description_lower = description.lower()
+    
+    # Try to match keywords
+    for category, keywords in keywords_map.items():
+        for keyword in keywords:
+            if keyword in description_lower:
+                return keyword.capitalize()
+    
+    # If no keyword matches, extract first word after "on" or "for"
+    if "on " in description_lower:
+        parts = description_lower.split("on ")
+        if len(parts) > 1:
+            words = parts[1].split()
+            if words:
+                return words[0].capitalize()
+    
+    if "for " in description_lower:
+        parts = description_lower.split("for ")
+        if len(parts) > 1:
+            words = parts[1].split()
+            if words:
+                return words[0].capitalize()
+    
+    # Default: return first word
+    words = description.split()
+    return words[0].capitalize() if words else "Expense"
+
 
 def parse_expense_message(message):
 
@@ -368,158 +454,176 @@ def chatbot():
     # -------- SHOW EXPENSE RECORDS --------
     if "show" in message:
 
-        # Detect time period
-        if "yesterday" in message:
-            target_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-            time_label = "yesterday"
-            is_monthly = False
-        elif "this month" in message or "monthly" in message:
-            current_month = datetime.now().strftime('%Y-%m')
-            time_label = "this month"
-            is_monthly = True
-        else:
-            target_date = datetime.now().strftime('%Y-%m-%d')
+        message_lower = message.lower()
+        
+        # Step 2: DETECT DATE
+        today = datetime.now().strftime('%Y-%m-%d')
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        current_month = datetime.now().strftime('%Y-%m')
+        
+        date_filter = None
+        time_label = None
+        is_monthly = False
+        
+        if "today" in message_lower:
+            date_filter = today
             time_label = "today"
-            is_monthly = False
-
-        # Category detection (using existing category logic)
-        categories = {
-            "Food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast", "food"],
-            "Fruits": ["fruit", "apple", "banana", "mango", "orange"],
-            "Transport": ["bus", "train", "metro", "uber", "ola", "auto", "petrol", "fuel"],
-            "Shopping": ["shopping", "clothes", "dress", "shoes", "mall"],
+        elif "yesterday" in message_lower:
+            date_filter = yesterday
+            time_label = "yesterday"
+        elif "month" in message_lower:
+            is_monthly = True
+            time_label = "this month"
+        else:
+            date_filter = today
+            time_label = "today"
+        
+        # Step 3: DETECT CATEGORY
+        categories_map = {
+            "Food": ["pizza", "burger", "food", "restaurant", "dinner", "lunch", "breakfast"],
+            "Fruits": ["fruits", "vegetables", "fruit", "apple", "banana", "mango", "orange"],
+            "Transport": ["bus", "train", "uber", "auto", "transport", "metro", "car"],
+            "Shopping": ["shopping", "mall", "clothes"],
+            "Rent": ["rent"],
             "Entertainment": ["movie", "cinema", "netflix", "game"],
-            "Adventure": ["trekking", "climbing", "trip", "travel"],
             "Health": ["medicine", "hospital", "doctor"],
             "Education": ["book", "course", "fees"]
         }
-
-        category = None
-        for cat, keywords in categories.items():
-            for word in keywords:
-                if word in message:
-                    category = cat
+        
+        selected_category = None
+        for cat, words in categories_map.items():
+            for word in words:
+                if word in message_lower:
+                    selected_category = cat
                     break
-            if category:
+            if selected_category:
                 break
-
-        # Query expenses with optional category filter
+        
+        # Step 4: FETCH FROM DATABASE
+        query = "SELECT id, description, amount FROM expenses WHERE user_id=?"
+        params = [user_id]
+        
         if is_monthly:
-            current_month = datetime.now().strftime('%Y-%m')
-            if category:
-                expenses = db.execute(
-                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date LIKE ? AND category=? ORDER BY date DESC",
-                    (user_id, f"{current_month}%", category)
-                ).fetchall()
-            else:
-                expenses = db.execute(
-                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date LIKE ? ORDER BY date DESC",
-                    (user_id, f"{current_month}%")
-                ).fetchall()
+            query += " AND date LIKE ?"
+            params.append(f"{current_month}%")
         else:
-            if category:
-                expenses = db.execute(
-                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date=? AND category=? ORDER BY date DESC",
-                    (user_id, target_date, category)
-                ).fetchall()
-            else:
-                expenses = db.execute(
-                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date=? ORDER BY date DESC",
-                    (user_id, target_date)
-                ).fetchall()
-
-        if not expenses:
-            category_name = f"{category} " if category else ""
-            return jsonify({"response": f"No {category_name}expenses found for {time_label}."})
-
-        # Format response with record IDs for user to reference
-        category_name = f"{category} " if category else ""
-        header = f"Here are your {time_label} {category_name}expenses:\n\n"
-
+            query += " AND date=?"
+            params.append(date_filter)
+        
+        if selected_category:
+            query += " AND category=?"
+            params.append(selected_category)
+        
+        query += " ORDER BY date DESC"
+        
+        records = db.execute(query, params).fetchall()
+        
+        # Step 5: HANDLE NO RECORDS
+        if not records:
+            cat_label = f"{selected_category} " if selected_category else ""
+            return jsonify({"response": f"❌ No {cat_label}records found for {time_label}."})
+        
+        # Step 6: FORMAT OUTPUT (✅ FIXED PART)
+        expense_map = {}
         lines = []
-        for exp in expenses:
-            lines.append(f"{exp['id']} {exp['description']} - ₹{exp['amount']}")
-
-        response = header + "\n".join(lines)
-
+        
+        for i, row in enumerate(records, start=1):
+            keyword = extract_keyword_from_description(row['description'])
+            amount = row['amount']
+            
+            lines.append(f"{i}. {keyword} - ₹{amount}")
+            
+            # ⭐ IMPORTANT FIX (string key)
+            expense_map[str(i)] = row['id']
+        
+        # Step 7: SAVE IN SESSION (VERY IMPORTANT)
+        session[f'expense_map_{user_id}'] = expense_map
+        session.modified = True
+        
+        # Step 8: RESPONSE FORMAT
+        cat_label = f"{selected_category} " if selected_category else ""
+        response = f"Here are your {time_label} {cat_label}expenses:\n\n"
+        response += "\n\n".join(lines)
+        
         return jsonify({"response": response})
 
     # -------- UPDATE EXPENSE --------
-    if "update" in message or "change" in message or "modify" in message or "edit" in message:
 
-        # Extract all numbers from message
-        numbers = re.findall(r'\d+(?:\.\d+)?', message)
+    if "update" in message:
 
-        if not numbers:
-            return jsonify({"response": "Please specify the expense record ID."})
+        expense_map = session.get(f'expense_map_{user_id}', {})
 
-        # First number is record ID
-        try:
-            expense_id = int(numbers[0])
-        except (ValueError, IndexError):
-            return jsonify({"response": "Please specify the expense record ID."})
+        if not expense_map:
+            return jsonify({"response": "⚠️ First use 'show' to see records."})
 
-        # For UPDATE, need both ID and amount
-        if len(numbers) < 2:
-            return jsonify({"response": "Please specify the new amount."})
+        index = extract_index(message, max_index=len(expense_map))
 
-        # Last number is new amount
-        try:
-            new_amount = float(numbers[-1])
-        except (ValueError, IndexError):
-            return jsonify({"response": "Please specify the new amount."})
+        if not index:
+            return jsonify({"response": "Use: update 1 or update first to 500"})
 
-        # Update the expense by ID
-        cursor = db.execute(
-            "UPDATE expenses SET amount=? WHERE id=? AND user_id=?",
-            (new_amount, expense_id, user_id)
-        )
+        # ⭐ ADD THIS LINE HERE
+        index = str(index)
 
-        db.commit()
+        amount_match = re.findall(r'\d+(?:\.\d+)?', message)
 
-        if cursor.rowcount == 0:
-            return jsonify({"response": f"Expense record {expense_id} not found."})
+        if not amount_match:
+            return jsonify({"response": "Please specify amount like: update 1 to 500"})
 
-        # Get the updated expense to show better message
-        updated_expense = db.execute(
-            "SELECT description FROM expenses WHERE id=?",
-            (expense_id,)
+        amount = float(amount_match[-1])
+
+        if index not in expense_map:
+            return jsonify({"response": f"❌ Record {index} not found."})
+
+        # Get current description
+        row = db.execute(
+            "SELECT description FROM expenses WHERE id=? AND user_id=?",
+            (expense_map[index], user_id)
         ).fetchone()
 
-        if updated_expense:
-            return jsonify({"response": f"{updated_expense['description']} updated successfully to ₹{new_amount}."})
+        old_description = row["description"]
 
-        return jsonify({"response": f"Expense record {expense_id} updated successfully to ₹{new_amount}."})
+        # Replace ONLY the amount in description
+        new_description = re.sub(r'\d+(?:\.\d+)?', str(int(amount)), old_description, count=1)
 
-    # -------- DELETE EXPENSE --------
-    if "delete" in message or "remove" in message:
-
-        # Extract all numbers from message
-        numbers = re.findall(r'\d+(?:\.\d+)?', message)
-
-        if not numbers:
-            return jsonify({"response": "Please specify the expense record ID."})
-
-        # First number is record ID
-        try:
-            expense_id = int(numbers[0])
-        except (ValueError, IndexError):
-            return jsonify({"response": "Please specify the expense record ID."})
-
-        # Delete the expense by ID
-        cursor = db.execute(
-            "DELETE FROM expenses WHERE id=? AND user_id=?",
-            (expense_id, user_id)
+        # Update both amount + description
+        db.execute(
+            "UPDATE expenses SET amount=?, description=? WHERE id=? AND user_id=?",
+            (amount, new_description, expense_map[index], user_id)
         )
-
         db.commit()
 
-        if cursor.rowcount == 0:
-            return jsonify({"response": f"Expense record {expense_id} not found."})
+        return jsonify({"response": f"✏️ Record {index} updated to ₹{amount}"})
+    # -------- DELETE EXPENSE --------
 
-        return jsonify({"response": f"Expense record {expense_id} deleted successfully."})
+    if "delete" in message:
 
-    # -------- ADD EXPENSE --------
+        expense_map = session.get(f'expense_map_{user_id}', {})
+
+        if not expense_map:
+            return jsonify({"response": "⚠️ First use 'show' to see records."})
+
+        index = extract_index(message, max_index=len(expense_map))
+
+        if not index:
+            return jsonify({"response": "Use: delete 1 or delete first"})
+
+        # ⭐ ADD THIS LINE HERE
+        index = str(index)
+
+        if index not in expense_map:
+            return jsonify({"response": f"❌ Record {index} not found."})
+
+        db.execute(
+            "DELETE FROM expenses WHERE id=? AND user_id=?",
+            (expense_map[index], user_id)
+        )
+        db.commit()
+
+        return jsonify({"response": f"✅ Record {index} deleted."})
+
+    
+   
+     # -------- ADD EXPENSE --------
     expense_data = parse_expense_message(message)
 
     if expense_data['amount'] > 0:
