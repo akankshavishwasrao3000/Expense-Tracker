@@ -14,7 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from io import BytesIO
-
+import json
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -365,16 +365,24 @@ def chatbot():
 
         return jsonify({"response": "No expenses found."})
 
-    # -------- UPDATE EXPENSE --------
-    if "update" in message or "change" in message or "modify" in message or "edit" in message:
+    # -------- SHOW EXPENSE RECORDS --------
+    if "show" in message:
 
-        amount_match = re.search(r'(\d+(?:\.\d+)?)', message)
+        # Detect time period
+        if "yesterday" in message:
+            target_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            time_label = "yesterday"
+            is_monthly = False
+        elif "this month" in message or "monthly" in message:
+            current_month = datetime.now().strftime('%Y-%m')
+            time_label = "this month"
+            is_monthly = True
+        else:
+            target_date = datetime.now().strftime('%Y-%m-%d')
+            time_label = "today"
+            is_monthly = False
 
-        if not amount_match:
-            return jsonify({"response": "Please specify the new amount."})
-
-        new_amount = float(amount_match.group(1))
-
+        # Category detection (using existing category logic)
         categories = {
             "Food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast", "food"],
             "Fruits": ["fruit", "apple", "banana", "mango", "orange"],
@@ -387,7 +395,6 @@ def chatbot():
         }
 
         category = None
-
         for cat, keywords in categories.items():
             for word in keywords:
                 if word in message:
@@ -396,81 +403,121 @@ def chatbot():
             if category:
                 break
 
-        if not category:
-            return jsonify({"response": "Please mention the category to update."})
-
-        if "yesterday" in message:
-            date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        # Query expenses with optional category filter
+        if is_monthly:
+            current_month = datetime.now().strftime('%Y-%m')
+            if category:
+                expenses = db.execute(
+                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date LIKE ? AND category=? ORDER BY date DESC",
+                    (user_id, f"{current_month}%", category)
+                ).fetchall()
+            else:
+                expenses = db.execute(
+                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date LIKE ? ORDER BY date DESC",
+                    (user_id, f"{current_month}%")
+                ).fetchall()
         else:
-            date = datetime.now().strftime('%Y-%m-%d')
+            if category:
+                expenses = db.execute(
+                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date=? AND category=? ORDER BY date DESC",
+                    (user_id, target_date, category)
+                ).fetchall()
+            else:
+                expenses = db.execute(
+                    "SELECT id, description, amount FROM expenses WHERE user_id=? AND date=? ORDER BY date DESC",
+                    (user_id, target_date)
+                ).fetchall()
 
-        # NEW DESCRIPTION
-        new_description = f"{category} expense updated to {new_amount}"
+        if not expenses:
+            category_name = f"{category} " if category else ""
+            return jsonify({"response": f"No {category_name}expenses found for {time_label}."})
 
+        # Format response with record IDs for user to reference
+        category_name = f"{category} " if category else ""
+        header = f"Here are your {time_label} {category_name}expenses:\n\n"
+
+        lines = []
+        for exp in expenses:
+            lines.append(f"{exp['id']} {exp['description']} - ₹{exp['amount']}")
+
+        response = header + "\n".join(lines)
+
+        return jsonify({"response": response})
+
+    # -------- UPDATE EXPENSE --------
+    if "update" in message or "change" in message or "modify" in message or "edit" in message:
+
+        # Extract all numbers from message
+        numbers = re.findall(r'\d+(?:\.\d+)?', message)
+
+        if not numbers:
+            return jsonify({"response": "Please specify the expense record ID."})
+
+        # First number is record ID
+        try:
+            expense_id = int(numbers[0])
+        except (ValueError, IndexError):
+            return jsonify({"response": "Please specify the expense record ID."})
+
+        # For UPDATE, need both ID and amount
+        if len(numbers) < 2:
+            return jsonify({"response": "Please specify the new amount."})
+
+        # Last number is new amount
+        try:
+            new_amount = float(numbers[-1])
+        except (ValueError, IndexError):
+            return jsonify({"response": "Please specify the new amount."})
+
+        # Update the expense by ID
         cursor = db.execute(
-            """
-            UPDATE expenses
-            SET amount = ?, description = ?
-            WHERE user_id = ? AND category = ? AND date = ?
-            """,
-            (new_amount, new_description, user_id, category, date)
+            "UPDATE expenses SET amount=? WHERE id=? AND user_id=?",
+            (new_amount, expense_id, user_id)
         )
 
         db.commit()
 
         if cursor.rowcount == 0:
-            return jsonify({"response": f"No {category} expense found for {date}."})
+            return jsonify({"response": f"Expense record {expense_id} not found."})
 
-        return jsonify({
-            "response": f"{category} expense updated successfully to ₹{new_amount}."
-        })
+        # Get the updated expense to show better message
+        updated_expense = db.execute(
+            "SELECT description FROM expenses WHERE id=?",
+            (expense_id,)
+        ).fetchone()
+
+        if updated_expense:
+            return jsonify({"response": f"{updated_expense['description']} updated successfully to ₹{new_amount}."})
+
+        return jsonify({"response": f"Expense record {expense_id} updated successfully to ₹{new_amount}."})
 
     # -------- DELETE EXPENSE --------
     if "delete" in message or "remove" in message:
 
-        categories = {
-            "Food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast", "food"],
-            "Fruits": ["fruit", "apple", "banana", "mango", "orange"],
-            "Transport": ["bus", "train", "metro", "uber", "ola", "auto", "petrol", "fuel"],
-            "Shopping": ["shopping", "clothes", "dress", "shoes", "mall"],
-            "Entertainment": ["movie", "cinema", "netflix", "game"],
-            "Adventure": ["trekking", "climbing", "trip", "travel"],
-            "Health": ["medicine", "hospital", "doctor"],
-            "Education": ["book", "course", "fees"]
-        }
+        # Extract all numbers from message
+        numbers = re.findall(r'\d+(?:\.\d+)?', message)
 
-        category = None
+        if not numbers:
+            return jsonify({"response": "Please specify the expense record ID."})
 
-        for cat, keywords in categories.items():
-            for word in keywords:
-                if word in message:
-                    category = cat
-                    break
-            if category:
-                break
+        # First number is record ID
+        try:
+            expense_id = int(numbers[0])
+        except (ValueError, IndexError):
+            return jsonify({"response": "Please specify the expense record ID."})
 
-        if not category:
-            return jsonify({"response": "Please mention the category to delete."})
-
-        if "yesterday" in message:
-            date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        else:
-            date = datetime.now().strftime('%Y-%m-%d')
-
+        # Delete the expense by ID
         cursor = db.execute(
-            """
-            DELETE FROM expenses
-            WHERE user_id = ? AND category = ? AND date = ?
-            """,
-            (user_id, category, date)
+            "DELETE FROM expenses WHERE id=? AND user_id=?",
+            (expense_id, user_id)
         )
 
         db.commit()
 
         if cursor.rowcount == 0:
-            return jsonify({"response": f"No {category} expense found to delete."})
+            return jsonify({"response": f"Expense record {expense_id} not found."})
 
-        return jsonify({"response": f"{category} expense deleted successfully."})
+        return jsonify({"response": f"Expense record {expense_id} deleted successfully."})
 
     # -------- ADD EXPENSE --------
     expense_data = parse_expense_message(message)
