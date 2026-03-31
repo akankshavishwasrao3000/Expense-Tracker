@@ -1,5 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
+<<<<<<< HEAD
 config/config.py
 expense_tracker.db
+=======
+.env
+>>>>>>> f2473456829ff5aa1da68f80eafced0c29ca4daf

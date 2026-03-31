@@ -1,30 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Records - Expense Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="weekly-records-page">
-    <div class="dashboard">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <h2>💰 Expense Tracker</h2>
-            <ul>
-                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
-                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
-                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
-                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
-                <li><a href="{{ url_for('history') }}">📜 History</a></li>
-                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
-                <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
-            </ul>
-        </div>
+{% extends "base.html" %}
 
-        <!-- Main Content -->
-        <div class="main-content">
+{% block title %}Weekly Records - Expense Tracker{% endblock %}
+
+{% block body_class %}weekly-records-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/weekly_records.css') }}">
+{% endblock %}
+
+{% block content %}
             <h1>📅 Weekly Records</h1>
 
             <div class="charts">
@@ -102,5 +86,5 @@
             }
         });
     </script>
-</body>
-</html>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Expense Tracker{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block extra_css %}{% endblock %}
+
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+
+    <div class="dashboard">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <h2>💰 Expense Tracker</h2>
+
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
+                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
+                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
+                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
+                <li><a href="{{ url_for('history') }}">📜 History</a></li>
+                <li><a href="{{ url_for('expense_calendar') }}">📅 Expense Calendar</a></li>
+                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
+                
+                <!-- AI Insights Section -->
+                <li style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <strong style="color: #ffd700;">🤖 AI Insights</strong>
+                </li>
+                <li><a href="{{ url_for('ai_financial_report') }}">💳 Financial Report</a></li>
+                <li><a href="{{ url_for('ai_budget_planner') }}">💰 Budget Planner</a></li>
+                <li><a href="{{ url_for('ai_savings_plan') }}">🎯 Savings Plan</a></li>
+                <li><a href="{{ url_for('ai_spending_insights') }}">📊 Spending Insights</a></li>
+                
+                <li style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <a href="{{ url_for('logout') }}">🚪 Logout</a>
+                </li>
+            </ul>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            {% block content %}{% endblock %}
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,23 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base-auth.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Expense Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        body {
-            background-image: url('{{ url_for("static", filename="images/img1.jpg") }}');
-        }
-    </style>
-</head>
+{% block title %}Login - Expense Tracker{% endblock %}
 
-<body class="auth-page">
-    <div class="auth-wrapper" style="background-image: url('{{ url_for('static', filename='images/img1.jpg') }}');">
-    </div>
-    <div class="auth-overlay">
-        <div class="auth-container">
+{% block bg_image %}{{ url_for("static", filename="images/img1.jpg") }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
             <h1>Login</h1>
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -43,7 +34,5 @@
             </form>
             <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a></p>
         </div>
-    </div>
-</body>
 
-</html>
+{% endblock %}

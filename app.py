@@ -15,6 +15,8 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from io import BytesIO
 import json
+import ai_service
+import config.config as config
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -908,6 +910,147 @@ def export_pdf():
         headers={'Content-Disposition': 'attachment;filename=expense_report.pdf'}
     )
 
+
+# -------- AI INSIGHTS ROUTES --------
+
+@app.route('/ai-financial-report', methods=['GET', 'POST'])
+@login_required
+def ai_financial_report():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy,  "financial")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Financial Report"
+    )
+
+@app.route('/ai-budget-planner', methods=['GET', 'POST'])
+@login_required
+def ai_budget_planner():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy,  "budget")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Budget Planner"
+    )
+
+@app.route('/ai-savings-plan', methods=['GET', 'POST'])
+@login_required
+def ai_savings_plan():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        
+        # ✅ PASS TYPE HERE
+        ai_response = ai_service.get_ai_analysis(insights_copy, "savings")
+        
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Savings Plan"
+    )
+    
+@app.route('/ai-spending-insights', methods=['GET', 'POST'])
+@login_required
+def ai_spending_insights():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy , "spending")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Spending Insights"
+    )
+
+# ===== EXPENSE CALENDAR ROUTES =====
+
+@app.route('/expense-calendar')
+@login_required
+def expense_calendar():
+    """Render expense calendar heatmap page"""
+    user_id = session['user_id']
+    return render_template('expense_calendar.html')
+
+@app.route('/calendar-data')
+@login_required
+def calendar_data():
+    """API: Get all expenses grouped by date with total amounts"""
+    user_id = session['user_id']
+    db = get_db()
+    
+    # Fetch all expenses for user
+    expenses = db.execute(
+        """SELECT date, SUM(amount) as total 
+           FROM expenses 
+           WHERE user_id = ? 
+           GROUP BY date 
+           ORDER BY date DESC""",
+        (user_id,)
+    ).fetchall()
+    
+    # Format for FullCalendar
+    events = []
+    for exp in expenses:
+        events.append({
+            "title": f"₹{exp['total']:.0f}",
+            "start": exp['date'],
+            "amount": exp['total']
+        })
+    
+    return jsonify(events)
+
+@app.route('/calendar-day-details/<date_str>')
+@login_required
+def calendar_day_details(date_str):
+    """API: Get expense details for a specific date"""
+    user_id = session['user_id']
+    db = get_db()
+    
+    # Fetch expenses for date
+    expenses = db.execute(
+        """SELECT description, amount 
+           FROM expenses 
+           WHERE user_id = ? AND date = ?
+           ORDER BY description ASC""",
+        (user_id, date_str)
+    ).fetchall()
+    
+    result = [{"description": exp['description'], "amount": exp['amount']} for exp in expenses]
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)

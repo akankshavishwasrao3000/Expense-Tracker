@@ -1,0 +1,119 @@
+/* ===== HISTORY PAGE ===== */
+
+/* ===== FILTERS ===== */
+.filter-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 30px;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 160px;
+}
+
+.filter-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #64748b;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-input {
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #f8fafc;
+    font-family: inherit;
+    color: var(--primary-color);
+}
+
+.modern-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-action {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
+    min-width: 160px;
+}
+
+.btn-filter {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.btn-filter:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-filter:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+}
+
+.table-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 30px;
+    border: 1px solid #f1f5f9;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .filter-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 100%;
+    }
+
+    .filter-action {
+        flex: 1;
+        min-width: 100%;
+    }
+
+    .btn-filter {
+        width: 100%;
+    }
+}

@@ -1,0 +1,4 @@
+/* ===== LOGIN PAGE ===== */
+body.login-page {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('../images/img1.jpg');
+}
