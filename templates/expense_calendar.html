@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Expense Calendar - Expense Tracker{% endblock %}
+
+{% block body_class %}calendar-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/expense_calendar.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<h1>📅 Expense Calendar Heatmap</h1>
+
+<div id="calendar"></div>
+
+<!-- Modal for expense details -->
+<div id="expenseModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalDate">Date</h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="expensesList"></div>
+            <div id="totalSpent"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="{{ url_for('static', filename='js/expense_calendar.js') }}"></script>
+
+{% endblock %}

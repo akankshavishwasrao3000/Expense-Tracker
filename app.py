@@ -996,5 +996,61 @@ def ai_spending_insights():
         page_title="AI Spending Insights"
     )
 
+# ===== EXPENSE CALENDAR ROUTES =====
+
+@app.route('/expense-calendar')
+@login_required
+def expense_calendar():
+    """Render expense calendar heatmap page"""
+    user_id = session['user_id']
+    return render_template('expense_calendar.html')
+
+@app.route('/calendar-data')
+@login_required
+def calendar_data():
+    """API: Get all expenses grouped by date with total amounts"""
+    user_id = session['user_id']
+    db = get_db()
+    
+    # Fetch all expenses for user
+    expenses = db.execute(
+        """SELECT date, SUM(amount) as total 
+           FROM expenses 
+           WHERE user_id = ? 
+           GROUP BY date 
+           ORDER BY date DESC""",
+        (user_id,)
+    ).fetchall()
+    
+    # Format for FullCalendar
+    events = []
+    for exp in expenses:
+        events.append({
+            "title": f"₹{exp['total']:.0f}",
+            "start": exp['date'],
+            "amount": exp['total']
+        })
+    
+    return jsonify(events)
+
+@app.route('/calendar-day-details/<date_str>')
+@login_required
+def calendar_day_details(date_str):
+    """API: Get expense details for a specific date"""
+    user_id = session['user_id']
+    db = get_db()
+    
+    # Fetch expenses for date
+    expenses = db.execute(
+        """SELECT description, amount 
+           FROM expenses 
+           WHERE user_id = ? AND date = ?
+           ORDER BY description ASC""",
+        (user_id, date_str)
+    ).fetchall()
+    
+    result = [{"description": exp['description'], "amount": exp['amount']} for exp in expenses]
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True)
