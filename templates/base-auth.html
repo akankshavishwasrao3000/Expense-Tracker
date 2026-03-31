@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Expense Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="auth-page">
+    <div class="auth-wrapper" style="background-image: url('{% block bg_image %}{{ url_for("static", filename="images/img1.jpg") }}{% endblock %}');">
+    </div>
+    <div class="auth-overlay">
+        <div class="auth-container">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+
+</html>

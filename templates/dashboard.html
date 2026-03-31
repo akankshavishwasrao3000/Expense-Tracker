@@ -1,44 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Dashboard - Expense Tracker{% endblock %}
 
-    <title>Dashboard - Expense Tracker</title>
+{% block body_class %}dashboard-page{% endblock %}
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-</head>
-
-<body class="dashboard-page">
-
-    <div class="dashboard">
-
-        <!-- Sidebar -->
-        <div class="sidebar">
-
-            <h2>💰 Expense Tracker</h2>
-
-            <ul>
-                <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
-                <li><a href="{{ url_for('weekly_records') }}">📅 Weekly Records</a></li>
-                <li><a href="{{ url_for('records') }}">📈 Monthly Records</a></li>
-                <li><a href="{{ url_for('yearly_records') }}">📋 Yearly Records</a></li>
-                <li><a href="{{ url_for('history') }}">📜 History</a></li>
-                <li><a href="{{ url_for('profile') }}">👤 Profile</a></li>
-                <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
-            </ul>
-
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
+{% block content %}
 
             <h1 style="color: aliceblue;">Welcome back, {{ username }} 👋</h1>
 
@@ -249,6 +219,4 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
-</body>
-
-</html>
+{% endblock %}

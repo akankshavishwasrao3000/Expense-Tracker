@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}AI Financial Insights - Expense Tracker{% endblock %}
+
+{% block body_class %}ai-insights-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai_insights.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="ai-container">
+        <!-- Header -->
+        <div class="ai-header">
+           <h1>🤖 {{ page_title }}</h1>
+            <button class="generate-btn" id="generateBtn" onclick="generateAnalysis()">
+                Generate AI Analysis
+            </button>
+        </div>
+
+        <!-- Summary Stats -->
+        {% if insights %}
+        <div class="summary-grid">
+            <div class="summary-box">
+                <h3>Total Spending</h3>
+                <div class="value">₹{{ "%.2f"|format(insights.total_spent) }}</div>
+            </div>
+            <div class="summary-box">
+                <h3>Transactions</h3>
+                <div class="value">{{ insights.transaction_count }}</div>
+            </div>
+            <div class="summary-box">
+                <h3>Top Category</h3>
+                <div class="value">
+                    {% if insights.top_categories %}
+                        {{ insights.top_categories[0].name }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Analysis Result -->
+        <div id="analysisResult">
+            {% if ai_response %}
+                {% if ai_response.startswith('❌') or ai_response.startswith('⚠️') %}
+                    <div class="error">
+                       {{ ai_response | safe }}
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <div class="response-container">
+{{ ai_response | safe }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="card">
+                    <p style="color: #999; text-align: center;">
+                        Click "Generate AI Analysis" to get personalized financial insights based on your spending patterns.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+  <script>
+function generateAnalysis() {
+    const btn = document.getElementById('generateBtn');
+    const resultDiv = document.getElementById('analysisResult');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    resultDiv.innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            Generating AI Insights...
+        </div>
+    `;
+
+    fetch('{{ request.path }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ generate: true })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.response.startsWith("❌") || data.response.startsWith("⚠️")) {
+            resultDiv.innerHTML = `<div class="error">${data.response}</div>`;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="card">
+                    <div class="response-container">${data.response}</div>
+                </div>
+            `;
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Generate AI Analysis';
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="error">Error: ${error}</div>`;
+        btn.disabled = false;
+        btn.textContent = 'Generate AI Analysis';
+    });
+}
+</script>
+
+{% endblock %}

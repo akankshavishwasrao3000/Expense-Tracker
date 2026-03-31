@@ -15,6 +15,8 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from io import BytesIO
 import json
+import ai_service
+import config.config as config
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -908,6 +910,91 @@ def export_pdf():
         headers={'Content-Disposition': 'attachment;filename=expense_report.pdf'}
     )
 
+
+# -------- AI INSIGHTS ROUTES --------
+
+@app.route('/ai-financial-report', methods=['GET', 'POST'])
+@login_required
+def ai_financial_report():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy,  "financial")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Financial Report"
+    )
+
+@app.route('/ai-budget-planner', methods=['GET', 'POST'])
+@login_required
+def ai_budget_planner():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy,  "budget")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Budget Planner"
+    )
+
+@app.route('/ai-savings-plan', methods=['GET', 'POST'])
+@login_required
+def ai_savings_plan():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        
+        # ✅ PASS TYPE HERE
+        ai_response = ai_service.get_ai_analysis(insights_copy, "savings")
+        
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Savings Plan"
+    )
+    
+@app.route('/ai-spending-insights', methods=['GET', 'POST'])
+@login_required
+def ai_spending_insights():
+    user_id = session['user_id']
+    
+    insights = ai_service.generate_ai_insights(user_id)
+    ai_response = None
+    
+    if request.method == 'POST':
+        insights_copy = insights.copy()
+        ai_response = ai_service.get_ai_analysis(insights_copy , "spending")
+        return jsonify({"success": True, "response": ai_response})
+    
+    return render_template(
+        'ai_insights.html',
+        insights=insights,
+        ai_response=ai_response,
+        page_title="AI Spending Insights"
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
