@@ -127,15 +127,19 @@ def extract_keyword_from_description(description):
     For use in clean display formatting.
     """
     keywords_map = {
-        "food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast", "food", "sandwich", "coffee", "tea"],
-        "fruits": ["fruit", "apple", "banana", "mango", "orange", "vegetables"],
-        "transport": ["bus", "train", "metro", "uber", "ola", "auto", "petrol", "fuel", "taxi", "transport"],
+        "food": ["pizza", "pani puri", "vada pav", "burger", "restaurant", "dinner", "lunch", "breakfast", "food", "sandwich", "coffee", "tea"],
+        "fruits": ["fruit", "apple", "banana", "mango", "orange", "watermelon"],
+        "vegetables": ["vegetables", "tomato", "potato", "onion", "ginger", "brinjal", "garlic"],
+        "transport": ["bus", "taxi", "train", "metro", "uber", "ola", "auto", "petrol", "fuel", "transport"],
         "shopping": ["shopping", "mall", "clothes", "dress", "shoes"],
-        "entertainment": ["movie", "cinema", "netflix", "game"],
+        "entertainment": ["movie", "cinema", "netflix", "disney", "jiohotstar", "prime video", "theater", "game"],
         "adventure": ["trekking", "climbing", "trip", "travel"],
         "health": ["medicine", "hospital", "doctor"],
         "education": ["book", "course", "fees"],
-        "rent": ["rent"]
+        "grocery": ["grocery"],
+        "rent": ["rent"],
+        "bill": ["electricity bill", "light bill", "water bill", "tv recharge", "mobile recharge", "wifi recharge"],
+        "beverage": ["tea", "lemon juice"]
     }
     
     description_lower = description.lower()
@@ -174,14 +178,19 @@ def parse_expense_message(message):
     message_lower = message.lower()
 
     categories = {
-        "Food": ["pizza", "burger", "restaurant", "dinner", "lunch", "breakfast"],
-        "Fruits": ["fruit", "apple", "banana", "mango", "orange"],
-        "Transport": ["bus", "train", "metro", "uber", "ola", "auto", "petrol", "fuel"],
-        "Shopping": ["shopping", "clothes", "dress", "shoes", "mall"],
-        "Entertainment": ["movie", "cinema", "netflix", "game"],
+        "Food": ["pizza", "pani puri" , "vada pow" , "burger", "restaurant", "dinner", "lunch", "breakfast", "food", "sandwich", "coffee", "tea"],
+        "Fruits": ["fruit", "apple", "banana", "mango", "orange", "watermelon"],
+        "Vegetables":["vegetables" , "tomato",  "potato" , "onion" , "ginger" , "brinjal" ,"garlic" ],
+        "Transport": ["bus" ,"train", "metro", "uber", "ola", "auto", "petrol", "fuel", "taxi", "transport"],
+        "Shopping": ["shopping", "mall", "clothes", "dress", "shoes"],
+        "Entertainment": ["movie", "cinema", "netflix",  "disney", "jiohotstar", "prime video" , "theater" ,"game"],
         "Adventure": ["trekking", "climbing", "trip", "travel"],
         "Health": ["medicine", "hospital", "doctor"],
-        "Education": ["book", "course", "fees"]
+        "Education": ["book", "course", "fees"],
+        "Grocery":["grocery"],
+        "Rent": ["rent"],
+        "Bill":["electricity bill" , "light bill" ,"water bill" , "tv recharge" , "mobile recharge" , "wifi recharge"],
+        "Beverage":["tea" , "lemon juice"]
     }
 
     category = "General"
@@ -196,6 +205,9 @@ def parse_expense_message(message):
 
     if "yesterday" in message_lower:
         date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    if "tomorrow" in message_lower:
+        date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
 
     payment_mode = "Cash"
 
@@ -354,6 +366,74 @@ def chatbot():
 
     message = request.get_json()['message'].lower()
 
+    if message.strip() in ["hi", "hello", "hey", "help", "start", "guide"]:
+        response = f"""
+            👋 Hello {session.get('username', 'User')}!
+            Welcome to Expense Tracker Chatbot 💰
+
+            ━━━━━━━━━━━━━━━━━━
+            📌 How to use:
+
+            ➤ 🟢 Add Expense
+            Example:
+            I spent 200 on pizza today using UPI
+
+            ➤ 📊 Show Expenses
+            • Show today expenses
+            • Show this month expenses
+
+            ➤ ✏️ Update Expense
+            • Update 1 to 500
+
+            ➤ ❌ Delete Expense
+            • Delete 2
+
+            ➤ 📈 Check Spending
+            • How much spent today
+            • Summary
+
+            ➤ 🎯 Set Budget
+            • Set budget 5000
+
+            ━━━━━━━━━━━━━━━━━━
+            💡 Tip: You can also use voice input 🎤
+
+            How can I help you? 😊
+        """
+        return jsonify({
+            "response": f"""
+            <b>👋 Hello {session.get('username', 'User')}!</b><br>
+            Welcome to <b>Expense Tracker Chatbot 💰</b><br><br>
+
+            <hr>
+
+            <b>📌 How to use:</b><br><br>
+
+            <b>➤ 🟢 Add Expense</b><br>
+            Example: I spent 200 on pizza today using UPI<br><br>
+
+            <b>➤ 📊 Show Expenses</b><br>
+            Show today expenses<br><br>
+
+            <b>➤ ✏️ Update Expense</b><br>
+            Update 1 to 500<br><br>
+
+            <b>➤ ❌ Delete Expense</b><br>
+            Delete 2<br><br>
+
+            <b>➤ 📈 Check Spending</b><br>
+            How much spent today<br><br>
+
+            <b>➤ 🎯 Set Budget</b><br>
+            Set budget 5000<br><br>
+
+            <hr>
+            💡 Tip: You can use voice input 🎤<br><br>
+
+            How can I help you? 😊
+            """
+        })
+
     db = get_db()
 
     # -------- BUDGET SET --------
@@ -482,14 +562,19 @@ def chatbot():
         
         # Step 3: DETECT CATEGORY
         categories_map = {
-            "Food": ["pizza", "burger", "food", "restaurant", "dinner", "lunch", "breakfast"],
-            "Fruits": ["fruits", "vegetables", "fruit", "apple", "banana", "mango", "orange"],
-            "Transport": ["bus", "train", "uber", "auto", "transport", "metro", "car"],
-            "Shopping": ["shopping", "mall", "clothes"],
-            "Rent": ["rent"],
-            "Entertainment": ["movie", "cinema", "netflix", "game"],
+            "Food": ["pizza", "pani puri" , "vada pow" , "burger", "restaurant", "dinner", "lunch", "breakfast", "food", "sandwich", "coffee", "tea"],
+            "Fruits": ["fruit", "apple", "banana", "mango", "orange", "watermelon"],
+            "Vegetables":["vegetables" , "tomato",  "potato" , "onion" , "ginger" , "brinjal" ,"garlic" ],
+            "Transport": ["bus" ,"train", "metro", "uber", "ola", "auto", "petrol", "fuel", "taxi", "transport"],
+            "Shopping": ["shopping", "mall", "clothes", "dress", "shoes"],
+            "Entertainment": ["movie", "cinema", "netflix",  "disney", "jiohotstar", "prime video" , "theater" ,"game"],
+            "Adventure": ["trekking", "climbing", "trip", "travel"],
             "Health": ["medicine", "hospital", "doctor"],
-            "Education": ["book", "course", "fees"]
+            "Education": ["book", "course", "fees"],
+            "Grocery":["grocery"],
+            "Rent": ["rent"],
+            "Bill":["electricity bill" , "light bill" ,"water bill" , "tv recharge" , "mobile recharge" , "wifi recharge"],
+            "Beverage":["tea" , "lemon juice"]
         }
         
         selected_category = None
@@ -627,6 +712,14 @@ def chatbot():
    
      # -------- ADD EXPENSE --------
     expense_data = parse_expense_message(message)
+    #prevent future (tomorrow) expense
+    today_date = datetime.now().date()
+    expense_date = datetime.strptime(expense_data['date'], "%Y-%m-%d").date()
+
+    if expense_date > today_date:
+        return jsonify({
+            "response": "❌ Can't add tomorrow's expense. You'll add it tomorrow, Thank you!!"
+        })
 
     if expense_data['amount'] > 0:
 

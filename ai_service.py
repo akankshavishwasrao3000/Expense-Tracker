@@ -84,8 +84,9 @@ def get_frequent_keywords(descriptions):
     
     # Common expense keywords
     expense_words = {
-        "pizza", "burger", "food", "restaurant", "lunch", "dinner",
-        "uber", "taxi", "auto", "bus", "train", "metro",
+        "pizza", "burger", "food", "restaurant", "lunch", "dinner","tea" ,
+        "pani puri" ,"Vada pow" ,  "light bill" ,"water bill" , "tv recharge" , "mobile recharge" , "wifi recharge",
+        "uber", "taxi", "auto", "bus", "train", "metro","grocery",
         "shopping", "clothes", "mall", "shoes", "dress",
         "movie", "cinema", "game", "netflix",
         "movie", "fruit", "vegetable", "medicine", "doctor"
