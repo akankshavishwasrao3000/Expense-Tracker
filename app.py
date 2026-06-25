@@ -436,7 +436,28 @@ def chatbot():
 
     db = get_db()
 
-    # -------- BUDGET SET --------
+    # -------- DELETE BUDGET --------
+    if "delete budget" in message or "remove budget" in message:
+
+        if user_id in user_budgets:
+            del user_budgets[user_id]
+            return jsonify({"response": "✅ Budget deleted successfully."})
+
+        return jsonify({"response": "❌ No budget found to delete."})
+
+
+# -------- SHOW BUDGET --------
+    if "show budget" in message or "my budget" in message:
+
+        if user_id in user_budgets:
+            return jsonify({
+                "response": f"💰 Your current monthly budget is ₹{user_budgets[user_id]}"
+            })
+
+        return jsonify({"response": "❌ No budget set yet."})
+
+
+    """ SET / UPDATE BUDGET --------"""
     if "budget" in message:
 
         amount_match = re.search(r'(\d+(?:\.\d+)?)', message)
@@ -446,10 +467,19 @@ def chatbot():
 
         budget = float(amount_match.group(1))
 
+        if user_id in user_budgets:
+            old_budget = user_budgets[user_id]
+            user_budgets[user_id] = budget
+
+            return jsonify({
+                "response": f"✅ Budget updated from ₹{old_budget} to ₹{budget}."
+            })
+
         user_budgets[user_id] = budget
 
-        return jsonify({"response": f"Monthly budget set to ₹{budget}."})
-
+        return jsonify({
+            "response": f"✅ Monthly budget set to ₹{budget}."
+        })
 
     # -------- SPENDING SUMMARY --------
     if "summary" in message:
