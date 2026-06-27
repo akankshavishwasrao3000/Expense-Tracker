@@ -56,7 +56,7 @@ def init_db():
 
 init_db()
 
-# ---------------- HELPER FUNCTIONS ----------------
+#login protection
 
 def login_required(f):
     def wrap(*args, **kwargs):
@@ -94,7 +94,7 @@ import re
 def extract_index(message, max_index=None):
     message = message.lower()
 
-    # ✅ 1. WORD PRIORITY (VERY IMPORTANT FIX)
+    #1 WORD PRIORITY
     word_map = {
         "first": 1,
         "second": 2,
@@ -113,7 +113,7 @@ def extract_index(message, max_index=None):
         if word in message:
             return value
 
-    # ✅ 2. NUMBER (ONLY FIRST NUMBER AFTER UPDATE/DELETE)
+    #2 NUMBER PRIORITY
     match = re.search(r'(update|delete)\s+(\d+)', message)
     if match:
         return int(match.group(2))
@@ -356,7 +356,7 @@ def delete_expense(expense_id):
     return jsonify({'success': True})
 
 
-# ---------------- CHATBOT ----------------
+#CHATBOT 
 
 @app.route('/chatbot', methods=['POST'])
 @login_required
@@ -436,7 +436,7 @@ def chatbot():
 
     db = get_db()
 
-    # -------- DELETE BUDGET --------
+    #DELETE BUDGET
     if "delete budget" in message or "remove budget" in message:
 
         if user_id in user_budgets:
@@ -446,7 +446,7 @@ def chatbot():
         return jsonify({"response": "❌ No budget found to delete."})
 
 
-# -------- SHOW BUDGET --------
+#SHOW BUDGET 
     if "show budget" in message or "my budget" in message:
 
         if user_id in user_budgets:
@@ -481,7 +481,7 @@ def chatbot():
             "response": f"✅ Monthly budget set to ₹{budget}."
         })
 
-    # -------- SPENDING SUMMARY --------
+    #SPENDING SUMMARY 
     if "summary" in message:
 
         today = datetime.now().strftime("%Y-%m-%d")
@@ -519,7 +519,7 @@ def chatbot():
         return jsonify({"response": response})
 
 
-    # -------- SPENDING TODAY --------
+    #SPENDING TODAY 
     if "how much" in message and "today" in message:
 
         today = datetime.now().strftime("%Y-%m-%d")
@@ -532,7 +532,7 @@ def chatbot():
         return jsonify({"response": f"You spent ₹{total} today."})
 
 
-    # -------- SPENDING MONTH --------
+    #SPENDING MONTH
     if "how much" in message and "month" in message:
 
         current_month = datetime.now().strftime("%Y-%m")
@@ -545,7 +545,7 @@ def chatbot():
         return jsonify({"response": f"You spent ₹{total} this month."})
 
 
-    # -------- HIGHEST CATEGORY --------
+    #HIGHEST CATEGORY
     if "which category" in message:
 
         result = db.execute(
@@ -563,7 +563,7 @@ def chatbot():
 
         return jsonify({"response": "No expenses found."})
 
-    # -------- SHOW EXPENSE RECORDS --------
+    #SHOW EXPENSE RECORDS 
     if "show" in message:
 
         message_lower = message.lower()
@@ -640,7 +640,7 @@ def chatbot():
             cat_label = f"{selected_category} " if selected_category else ""
             return jsonify({"response": f"❌ No {cat_label}records found for {time_label}."})
         
-        # Step 6: FORMAT OUTPUT (✅ FIXED PART)
+        # Step 6: FORMAT OUTPUT
         expense_map = {}
         lines = []
         
@@ -650,10 +650,10 @@ def chatbot():
             
             lines.append(f"{i}. {keyword} - ₹{amount}")
             
-            # ⭐ IMPORTANT FIX (string key)
+            #IMPORTANT FIX 
             expense_map[str(i)] = row['id']
         
-        # Step 7: SAVE IN SESSION (VERY IMPORTANT)
+        # Step 7: SAVE IN SESSION
         session[f'expense_map_{user_id}'] = expense_map
         session.modified = True
         
@@ -664,7 +664,7 @@ def chatbot():
         
         return jsonify({"response": response})
 
-    # -------- UPDATE EXPENSE --------
+    #UPDATE EXPENSE
 
     if "update" in message:
 
@@ -678,7 +678,7 @@ def chatbot():
         if not index:
             return jsonify({"response": "Use: update 1 or update first to 500"})
 
-        # ⭐ ADD THIS LINE HERE
+        #ADD THIS LINE HERE
         index = str(index)
 
         amount_match = re.findall(r'\d+(?:\.\d+)?', message)
@@ -710,7 +710,7 @@ def chatbot():
         db.commit()
 
         return jsonify({"response": f"✏️ Record {index} updated to ₹{amount}"})
-    # -------- DELETE EXPENSE --------
+    #DELETE EXPENSE 
 
     if "delete" in message:
 
@@ -724,7 +724,7 @@ def chatbot():
         if not index:
             return jsonify({"response": "Use: delete 1 or delete first"})
 
-        # ⭐ ADD THIS LINE HERE
+        #ADD THIS LINE HERE
         index = str(index)
 
         if index not in expense_map:
@@ -740,7 +740,7 @@ def chatbot():
 
     
    
-     # -------- ADD EXPENSE --------
+     # ADD EXPENSE
     expense_data = parse_expense_message(message)
     #prevent future (tomorrow) expense
     today_date = datetime.now().date()
@@ -791,7 +791,7 @@ def chatbot():
     return jsonify({"response": "Could not understand your message."})
 
 
-# ---------------- ANALYTICS PAGES ----------------
+#ANALYTICS PAGES
 
 @app.route('/weekly-records')
 @login_required
@@ -1034,7 +1034,7 @@ def export_pdf():
     )
 
 
-# -------- AI INSIGHTS ROUTES --------
+#AI INSIGHTS ROUTES
 
 @app.route('/ai-financial-report', methods=['GET', 'POST'])
 @login_required
@@ -1087,7 +1087,7 @@ def ai_savings_plan():
     if request.method == 'POST':
         insights_copy = insights.copy()
         
-        # ✅ PASS TYPE HERE
+        #PASS TYPE HERE
         ai_response = ai_service.get_ai_analysis(insights_copy, "savings")
         
         return jsonify({"success": True, "response": ai_response})
@@ -1119,7 +1119,7 @@ def ai_spending_insights():
         page_title="AI Spending Insights"
     )
 
-# ===== EXPENSE CALENDAR ROUTES =====
+#EXPENSE CALENDAR ROUTES
 
 @app.route('/expense-calendar')
 @login_required

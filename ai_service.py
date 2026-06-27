@@ -120,10 +120,10 @@ def get_ai_analysis(insights_data, analysis_type):
     try:
         client = Groq(api_key=config.GROQ_API_KEY)
 
-        # ✅ Format data
+        # Format data
         formatted_data = format_insights_for_prompt(insights_data)
 
-        # ✅ Dynamic prompts
+        # Dynamic prompts
         if analysis_type == "financial":
             prompt = f"""
 You are a professional financial advisor.
@@ -218,7 +218,7 @@ Use short paragraphs and spacing between sections.
         else:
             prompt = f"Analyze this data:\n{formatted_data}"
 
-        # ✅ Auto-select working model
+        # Auto-select working model
         models = client.models.list()
         available_models = [m.id for m in models.data]
 
@@ -233,7 +233,7 @@ Use short paragraphs and spacing between sections.
         if not model_name:
             model_name = available_models[0]
 
-        # ✅ API Call
+        # API Call
         response = client.chat.completions.create(
             model=model_name,
             messages=[

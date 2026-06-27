@@ -1,11 +1,11 @@
-/* ===== EXPENSE CALENDAR SCRIPT ===== */
+
 
 document.addEventListener('DOMContentLoaded', function() {
     initCalendar();
     setupModalHandlers();
 });
 
-// Initialize FullCalendar
+
 function initCalendar() {
     const calendarEl = document.getElementById('calendar');
     
@@ -21,7 +21,7 @@ function initCalendar() {
             fetch('/calendar-data')
                 .then(res => res.json())
                 .then(data => {
-                    // Add amount to extendedProps for eventDidMount callback
+                    
                     const coloredEvents = data.map(event => {
                         return {
                             ...event,
@@ -39,20 +39,20 @@ function initCalendar() {
                 });
         },
         eventDidMount: function(info) {
-            // Apply colors dynamically based on amount during initial render and re-renders
+           
             const amount = info.event.extendedProps.amount;
-            let bgColor = '#d4edda'; // Light Green (₹0-₹200)
-            let textColor = '#155724'; // Dark green text
+            let bgColor = '#d4edda'; 
+            let textColor = '#155724'; 
             
             if (amount > 700) {
-                bgColor = '#f8d7da'; // Dark Red (₹701+)
-                textColor = '#721c24'; // Dark red text
+                bgColor = '#f8d7da';
+                textColor = '#721c24'; 
             } else if (amount > 200) {
-                bgColor = '#ffe5b4'; // Orange (₹201-₹700)
-                textColor = '#b8860b'; // Dark orange text
+                bgColor = '#ffe5b4'; 
+                textColor = '#b8860b';
             }
             
-            // Apply styles directly to the event element with !important to override CSS
+          
             const eventElement = info.el.querySelector('.fc-event-main') || info.el;
             eventElement.style.setProperty('background-color', bgColor, 'important');
             info.el.style.borderColor = bgColor;
@@ -60,12 +60,12 @@ function initCalendar() {
             info.el.style.fontSize = '0.85rem';
             info.el.style.fontWeight = '500';
             
-            // Remove or minimize border
+           
             if (info.el.style.border) {
                 info.el.style.border = 'none';
             }
             
-            // Apply smooth hover effect - slightly darken color
+            
             info.el.addEventListener('mouseenter', function() {
                 this.style.opacity = '0.8';
                 this.style.transform = 'scale(1.02)';
@@ -89,7 +89,7 @@ function initCalendar() {
     calendar.render();
 }
 
-// Handle date click and show modal
+
 function handleDateClick(dateStr) {
     fetch(`/calendar-day-details/${dateStr}`)
         .then(res => res.json())
@@ -102,14 +102,14 @@ function handleDateClick(dateStr) {
         });
 }
 
-// Display modal with expense details
+
 function showExpenseModal(dateStr, expenses) {
     const modal = document.getElementById('expenseModal');
     const modalDate = document.getElementById('modalDate');
     const expensesList = document.getElementById('expensesList');
     const totalSpent = document.getElementById('totalSpent');
     
-    // Format date
+   
     const date = new Date(dateStr + 'T00:00:00');
     const formattedDate = date.toLocaleDateString('en-IN', {
         weekday: 'long',
@@ -120,7 +120,7 @@ function showExpenseModal(dateStr, expenses) {
     
     modalDate.textContent = formattedDate;
     
-    // Clear and populate expenses
+  
     expensesList.innerHTML = '';
     let total = 0;
     
@@ -145,7 +145,7 @@ function showExpenseModal(dateStr, expenses) {
     modal.classList.add('show');
 }
 
-// Modal handlers
+
 function setupModalHandlers() {
     const modal = document.getElementById('expenseModal');
     const closeBtn = document.querySelector('.close');

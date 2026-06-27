@@ -1,6 +1,3 @@
-// chatbot.js - Chatbot functionality
-
-// Chatbot elements
 const chatbotIcon = document.getElementById('chatbot-icon');
 const chatWindow = document.getElementById('chat-window');
 const closeChat = document.getElementById('close-chat');
@@ -9,7 +6,7 @@ const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const micBtn = document.getElementById('mic-btn');
 
-// Speech recognition
+
 let recognition = null;
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -28,7 +25,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     };
 }
 
-// Toggle chat window
+
 chatbotIcon.addEventListener('click', function() {
     chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
 });
@@ -37,14 +34,14 @@ closeChat.addEventListener('click', function() {
     chatWindow.style.display = 'none';
 });
 
-// Send message
+
 function sendMessage() {
     const message = chatInput.value.trim();
     if (message) {
         addMessage(message, 'user');
         chatInput.value = '';
 
-        // Send to backend
+        
         fetch('/chatbot', {
             method: 'POST',
             headers: {
@@ -71,7 +68,7 @@ chatInput.addEventListener('keypress', function(e) {
     }
 });
 
-// Microphone button
+
 micBtn.addEventListener('click', function() {
     if (recognition) {
         recognition.start();
@@ -80,7 +77,7 @@ micBtn.addEventListener('click', function() {
     }
 });
 
-// Add message to chat
+
 function addMessage(text, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}-message`;
